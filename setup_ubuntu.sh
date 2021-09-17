@@ -1,3 +1,8 @@
+# Configure GIT
+sudo apt install git
+git config --global user.name "pedronogs"
+git config --global user.email "phnogs@hotmail.com"
+
 # Install ZSH shell
 sudo apt install zsh
 chsh -s $(which zsh)
