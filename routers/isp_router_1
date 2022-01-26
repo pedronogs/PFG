@@ -1,0 +1,155 @@
+interfaces {
+    ethernet eth0 {
+        address dhcp
+        duplex auto
+        hw-id 0c:6c:4d:0f:00:00
+        smp-affinity auto
+        speed auto
+    }
+    ethernet eth1 {
+        address 181.0.0.1/30
+        duplex auto
+        hw-id 0c:6c:4d:0f:00:01
+        smp-affinity auto
+        speed auto
+    }
+    ethernet eth2 {
+        address 181.0.0.5/30
+        duplex auto
+        hw-id 0c:6c:4d:0f:00:02
+        smp-affinity auto
+        speed auto
+    }
+    ethernet eth3 {
+        duplex auto
+        hw-id 0c:6c:4d:0f:00:03
+        smp-affinity auto
+        speed auto
+    }
+    loopback lo {
+        address 10.10.10.10/32
+    }
+}
+nat {
+    source {
+        rule 100 {
+            outbound-interface eth0
+            source {
+                address 181.0.0.0/29
+            }
+            translation {
+                address masquerade
+            }
+        }
+    }
+}
+policy {
+    route-map DefRoute-ISP1-ORG_EDGE_1 {
+        rule 1 {
+            action permit
+            set {
+                metric 10
+                metric-type type-2
+            }
+        }
+    }
+    route-map DefRoute-ISP1-ORG_EDGE_2 {
+        rule 1 {
+            action permit
+            set {
+                metric 100
+                metric-type type-2
+            }
+        }
+    }
+}
+protocols {
+    bgp 10000 {
+        neighbor 181.0.0.2 {
+            address-family {
+                ipv4-unicast {
+                    default-originate {
+                        route-map DefRoute-ISP1-ORG_EDGE_1
+                    }
+                    soft-reconfiguration {
+                        inbound
+                    }
+                }
+            }
+            peer-group ORG_EDGE_EBGP
+            update-source eth1
+        }
+        neighbor 181.0.0.6 {
+            address-family {
+                ipv4-unicast {
+                    default-originate {
+                        route-map DefRoute-ISP1-ORG_EDGE_2
+                    }
+                }
+            }
+            peer-group ORG_EDGE_EBGP
+            update-source eth2
+        }
+        parameters {
+            router-id 10.10.10.10
+        }
+        peer-group ORG_EDGE_EBGP {
+            address-family {
+                ipv4-unicast {
+                }
+            }
+            remote-as 50000
+            update-source eth1
+        }
+    }
+    static {
+        route 0.0.0.0/0 {
+            next-hop 192.168.1.254 {
+            }
+        }
+    }
+}
+system {
+    config-management {
+        commit-revisions 100
+    }
+    console {
+        device ttyS0 {
+            speed 9600
+        }
+    }
+    host-name ISP-ROUTER-1
+    login {
+        user vyos {
+            authentication {
+                encrypted-password $6$InGqR5TA9$224hLy8UkDkv8sI4ypl7nBaN2YOkyFDPc6O9PNXprc9r0Ffv8ycc8TnTuTMuK825lHcMNCx5RVrNZlr.90i6y0
+                plaintext-password ""
+            }
+            level admin
+        }
+    }
+    ntp {
+        server 0.pool.ntp.org {
+        }
+        server 1.pool.ntp.org {
+        }
+        server 2.pool.ntp.org {
+        }
+    }
+    syslog {
+        global {
+            facility all {
+                level info
+            }
+            facility protocols {
+                level debug
+            }
+        }
+    }
+    time-zone UTC
+}
+
+
+/* Warning: Do not remove the following line. */
+/* === vyatta-config-version: "broadcast-relay@1:cluster@1:config-management@1:conntrack-sync@1:conntrack@1:dhcp-relay@2:dhcp-server@5:dns-forwarding@1:firewall@5:ipsec@5:l2tp@1:mdns@1:nat@4:ntp@1:pppoe-server@2:pptp@1:qos@1:quagga@7:snmp@1:ssh@1:system@10:vrrp@2:wanloadbalance@3:webgui@1:webproxy@1:webproxy@2:zone-policy@1" === */
+/* Release version: 999.202108252100 */
